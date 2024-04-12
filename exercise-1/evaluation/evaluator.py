@@ -1,8 +1,12 @@
 import time
 
+from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
 from tabulate import tabulate
 import pandas as pd
+
+import warnings
+
 
 def evaluate(
         classifier,
@@ -14,6 +18,7 @@ def evaluate(
         hyperparameter_iterate="",
         hyperparameter_iterations=[]
 ):
+    warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
     print("================================================================================")
     print("Evaluating classifier: ", classifier.__name__)
     print("Hyperparameters: ", hyperparameters)
