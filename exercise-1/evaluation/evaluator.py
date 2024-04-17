@@ -1,7 +1,7 @@
+import pandas as pd
 import time
 import warnings
-
-import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
 from tabulate import tabulate
@@ -114,3 +114,45 @@ def __eval(clf, y_test, y_pred, start, end, hyperparameter_iterate, hyperparamet
     print("Confusion Matrix: ")
     print(tabulate(cm, headers='keys', tablefmt='psql'))
     return evaluation_results
+
+
+# Define a generator function to yield all fields from the dataset
+def __extract_fields(data_sets):
+    for dataset in data_sets.values():
+        for entry in dataset.values():
+            yield from entry.keys()
+
+
+def draw_diagrams(evaluation_results):
+    # Use a set comprehension to collect unique fields
+    fields_set = {
+        field
+        for field in __extract_fields(evaluation_results)
+        if field != 'alpha' and field != 'confusion_matrix'
+    }
+    for field in fields_set:
+        __draw_diagram_for_field(field, evaluation_results)
+
+
+def __draw_diagram_for_field(field, evaluation_results, figsize=(10, 6)):
+    # Plotting
+    plt.figure(figsize=figsize)
+
+    plt.figure(figsize=figsize)
+
+    for dataset_name, dataset in evaluation_results.items():
+        hyperparameter_values = []
+        values = []
+
+        for key, value in dataset.items():
+            hyperparameter_values.append(value[key.split(":")[0]])
+            values.append(value[field])
+
+        plt.plot(hyperparameter_values, values, marker='o', label=dataset_name)
+
+    plt.title(field.capitalize())
+    plt.xlabel('Alpha')
+    plt.ylabel(field.capitalize())
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
