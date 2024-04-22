@@ -279,8 +279,54 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
 def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True):
 
     for i, y in enumerate(y_axis):
-        draw_diagram2(evaluation_results, x_axis, y, figsize, title[i] if title is not None else None, logaritmic, line)
+        draw_diagram2(evaluation_results, x_axis, y, figsize, title if title is not None else None, logaritmic, line)
 
+
+def draw_diagram2_list_all_in_one(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True):
+
+        plt.figure(figsize=figsize)
+
+        is_str = False
+        for dataset_name, results in evaluation_results.items():
+
+            for i, y in enumerate(y_axis):
+                x_values = [metrics[x_axis] for metrics in results.values()]
+                y_values = [metrics[y] for metrics in results.values()]
+                if isinstance(x_values[0], (int, float, complex)):
+                    plt.plot(x_values, y_values, marker='o', label=dataset_name + " " + y)
+                else:
+                    is_str = True
+                    # Extract key-value pairs and sort based on the x_metric lexicographically
+                    items = [(config[x_axis], config[y]) for config in results.values()]
+                    items.sort()  # This sorts tuples lexicographically by default
+
+                    # Split sorted items back into x and y values
+                    x_values, y_values = zip(*items)
+
+                    # Convert tuples to string labels if necessary
+                    x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
+
+                    if line:
+                        plt.plot(x_labels, y_values, marker='o', label=dataset_name + " " + y)
+                    else:
+                        plt.scatter(x_labels, y_values, marker='o', label=dataset_name + " " + y)
+
+
+        if title is not None:
+            plt.title(title)
+        else:
+            plt.title(y_axis[0].capitalize())
+        # make x-axis logarithmic
+        if logaritmic:
+            plt.xscale('log')
+
+        plt.xlabel(x_axis.capitalize())
+        plt.ylabel(y_axis[0].capitalize())
+        if is_str:
+            plt.xticks(rotation=45)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
 
 def draw_diagrams(evaluation_results):
     # Use a set comprehension to collect unique fields
