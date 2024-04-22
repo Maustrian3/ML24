@@ -123,6 +123,68 @@ def __extract_fields(data_sets):
             yield from entry.keys()
 
 
+
+# data_sets = {
+#     'dataset_1': {
+#         'alpha:0.001': {'accuracy': 0.965034965034965, 'recall': 0.965034965034965, 'precision': 0.9652663191989034,
+#                         'f1': 0.9651006853533873, 'time': 280.17568588256836, 'confusion_matrix': [[87, 3], [2, 51]],
+#                         'alpha': 0.001, 'hidden_layer_sizes': (75, 75, 75)},
+#         'alpha:0.0001': {'accuracy': 0.972027972027972, 'recall': 0.972027972027972, 'precision': 0.972027972027972,
+#                          'f1': 0.972027972027972, 'time': 339.1234874725342, 'confusion_matrix': [[88, 2], [2, 51]],
+#                          'alpha': 0.0001, 'hidden_layer_sizes': (100, 100, 100)},
+#         'alpha:1e-05': {'accuracy': 0.972027972027972, 'recall': 0.972027972027972, 'precision': 0.972027972027972,
+#                         'f1': 0.972027972027972, 'time': 341.6876792907715, 'confusion_matrix': [[88, 2], [2, 51]],
+#                         'alpha': 1e-05, 'hidden_layer_sizes': (120, 120, 120)}
+#     },
+#     'dataset_2': {
+#         'alpha:0.001': {'accuracy': 0.965034965034965, 'recall': 0.865034965034965, 'precision': 0.9652663191989034,
+#                         'f1': 0.9651006853533873, 'time': 280.17568588256836, 'confusion_matrix': [[87, 3], [2, 51]],
+#                         'alpha': 0.001, 'hidden_layer_sizes': (75, 75, 75)},
+#         'alpha:0.0001': {'accuracy': 0.972027972027972, 'recall': 0.872027972027972, 'precision': 0.972027972027972,
+#                          'f1': 0.972027972027972, 'time': 339.1234874725342, 'confusion_matrix': [[88, 2], [2, 51]],
+#                          'alpha': 0.0001, 'hidden_layer_sizes': (100, 100, 100)},
+#         'alpha:1e-05': {'accuracy': 0.982027972027972, 'recall': 0.872027972027972, 'precision': 0.972027972027972,
+#                         'f1': 0.972027972027972, 'time': 341.6876792907715, 'confusion_matrix': [[88, 2], [2, 51]],
+#                         'alpha': 1e-05, 'hidden_layer_sizes': (130, 130, 130)}
+#     },
+# }
+
+def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None):
+    plt.figure(figsize=figsize)
+
+
+    for dataset_name, results in evaluation_results.items():
+
+        x_values = [metrics[x_axis] for metrics in results.values()]
+        y_values = [metrics[y_axis] for metrics in results.values()]
+        if isinstance(x_values[0], (int, float, complex)):
+            plt.plot(x_values, y_values, marker='o', label=dataset_name)
+        else:
+            # Extract key-value pairs and sort based on the x_metric lexicographically
+            items = [(config[x_axis], config[y_axis]) for config in results.values()]
+            items.sort()  # This sorts tuples lexicographically by default
+
+            # Split sorted items back into x and y values
+            x_values, y_values = zip(*items)
+
+            # Convert tuples to string labels if necessary
+            x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
+
+            plt.plot(x_labels, y_values, marker='o', label=dataset_name)
+
+
+    if title is not None:
+        plt.title(title)
+    else:
+        plt.title(y_axis.capitalize())
+    plt.xlabel(x_axis.capitalize())
+    plt.ylabel(y_axis.capitalize())
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+
 def draw_diagrams(evaluation_results):
     # Use a set comprehension to collect unique fields
     fields_set = {
