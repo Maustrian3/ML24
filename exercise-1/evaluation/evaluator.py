@@ -64,7 +64,35 @@ def evaluate_classifier(
         clf.fit(X_train, y_train)
         end = time.time()
         y_pred = clf.predict(X_test)
-        results[names[i]] = __eval_clf(clf, y_test, y_pred, start, end, names[i])
+        results[names[i]] = __eval_custom(clf, y_test, y_pred, start, end, names[i], "classifier")
+
+    print("================================================================================")
+    return results
+
+def evaluate_scaler(classifier,
+        X_train=[],
+        y_train=[],
+        X_test=[],
+        y_test=[],
+        hyperparameters={},
+        names=[]):
+    warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+    print("================================================================================")
+    print("Evaluating classifier: ", classifier.__name__)
+    print("Hyperparameters: ", hyperparameters)
+
+    results = {}
+    for i in range(len(X_train)):
+        X_t = X_train[i]
+        X_te = X_test[i]
+        y_t = y_train[i]
+        y_te = y_test[i]
+        clf = classifier(**hyperparameters)
+        start = time.time()
+        clf.fit(X_t, y_t)
+        end = time.time()
+        y_pred = clf.predict(X_te)
+        results[names[i]] = __eval_custom(clf, y_te, y_pred, start, end, names[i], "scaler")
 
     print("================================================================================")
     return results
@@ -111,7 +139,7 @@ def evaluate2(
     return results
 
 
-def __eval_clf(clf, y_test, y_pred, start, end, name):
+def __eval_custom(clf, y_test, y_pred, start, end, name, key):
     accuracy = accuracy_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred, average='weighted')
     precision = precision_score(y_test, y_pred, average='weighted')
@@ -126,7 +154,7 @@ def __eval_clf(clf, y_test, y_pred, start, end, name):
         "f1": f1,
         "time": (end - start) * 1000,
         "confusion_matrix": cm,
-        "classifier": name
+        key: name
     }
 
     print("========================================")
