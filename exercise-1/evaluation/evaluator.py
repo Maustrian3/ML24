@@ -183,6 +183,10 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
     plt.tight_layout()
     plt.show()
 
+def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None):
+
+    for i, y in enumerate(y_axis):
+        draw_diagram2(evaluation_results, x_axis, y, figsize, title[i] if title is not None else None)
 
 
 def draw_diagrams(evaluation_results):
