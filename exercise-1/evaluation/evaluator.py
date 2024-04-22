@@ -44,6 +44,32 @@ def evaluate(
     print("================================================================================")
 
 
+def evaluate_classifier(
+        classifiers, #=[],
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        hyperparameters=[],
+        names=[]
+):
+    warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+    print("================================================================================")
+
+    results = {}
+    for i, classifier in enumerate(classifiers):
+        hp = hyperparameters[i]
+        clf = classifier(**hp)
+        start = time.time()
+        clf.fit(X_train, y_train)
+        end = time.time()
+        y_pred = clf.predict(X_test)
+        results[names[i]] = __eval_clf(clf, y_test, y_pred, start, end, names[i])
+
+    print("================================================================================")
+    return results
+
+
 def evaluate2(
         classifier,
         X_train,
@@ -84,6 +110,35 @@ def evaluate2(
     print("================================================================================")
     return results
 
+
+def __eval_clf(clf, y_test, y_pred, start, end, name):
+    accuracy = accuracy_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred, average='weighted')
+    precision = precision_score(y_test, y_pred, average='weighted')
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    cm = confusion_matrix(y_test, y_pred)
+    cm = pd.DataFrame(cm, index=clf.classes_, columns=clf.classes_)
+
+    evaluation_results = {
+        "accuracy": accuracy,
+        "recall": recall,
+        "precision": precision,
+        "f1": f1,
+        "time": (end - start) * 1000,
+        "confusion_matrix": cm,
+        "classifier": name
+    }
+
+    print("========================================")
+    print("Classifier " + name)
+    print("Accuracy: ", accuracy)
+    print("Recall: ", recall)
+    print("Precision: ", precision)
+    print("F1: ", f1)
+    print("Time: {:.6f}ms".format((end - start) * 1000))
+    print("Confusion Matrix: ")
+    print(tabulate(cm, headers='keys', tablefmt='psql'))
+    return evaluation_results
 
 def __eval(clf, y_test, y_pred, start, end, hyperparameter_iterate, hyperparameter_value):
     accuracy = accuracy_score(y_test, y_pred)
