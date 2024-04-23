@@ -51,7 +51,8 @@ def evaluate_classifier(
         X_test,
         y_test,
         hyperparameters=[],
-        names=[]
+        names=[],
+        number_of_tests=1
 ):
     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
     print("================================================================================")
@@ -59,12 +60,36 @@ def evaluate_classifier(
     results = {}
     for i, classifier in enumerate(classifiers):
         hp = hyperparameters[i]
-        clf = classifier(**hp)
-        start = time.time()
-        clf.fit(X_train, y_train)
-        end = time.time()
-        y_pred = clf.predict(X_test)
-        results[names[i]] = __eval_custom(clf, y_test, y_pred, start, end, names[i], "classifier")
+
+        accuracy = []
+        recall = []
+        precision = []
+        f1 = []
+        time_list = []
+
+        for j in range(number_of_tests):
+            clf = classifier(**hp)
+            start = time.time()
+            clf.fit(X_train, y_train)
+            end = time.time()
+            y_pred = clf.predict(X_test)
+
+            accuracy.append(accuracy_score(y_test, y_pred))
+            recall.append(recall_score(y_test, y_pred, average='weighted'))
+            precision.append(precision_score(y_test, y_pred, average='weighted'))
+            f1.append(f1_score(y_test, y_pred, average='weighted'))
+            time_list.append((end - start) * 1000)
+
+        evaluation_results = {
+            "accuracy": sum(accuracy) / len(accuracy),
+            "recall": sum(recall) / len(recall),
+            "precision": sum(precision) / len(precision),
+            "f1": sum(f1) / len(f1),
+            "time": sum(time_list) / len(time_list),
+            "classifier": names[i]
+        }
+
+        results[names[i]] = evaluation_results
 
     print("================================================================================")
     return results
@@ -75,7 +100,9 @@ def evaluate_scaler(classifier,
         X_test=[],
         y_test=[],
         hyperparameters={},
-        names=[]):
+        names=[],
+        number_of_tests=1
+                    ):
     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
     print("================================================================================")
     print("Evaluating classifier: ", classifier.__name__)
@@ -87,12 +114,37 @@ def evaluate_scaler(classifier,
         X_te = X_test[i]
         y_t = y_train[i]
         y_te = y_test[i]
-        clf = classifier(**hyperparameters)
-        start = time.time()
-        clf.fit(X_t, y_t)
-        end = time.time()
-        y_pred = clf.predict(X_te)
-        results[names[i]] = __eval_custom(clf, y_te, y_pred, start, end, names[i], "scaler")
+
+        accuracy = []
+        recall = []
+        precision = []
+        f1 = []
+        time_list = []
+
+        for j in range(number_of_tests):
+            clf = classifier(**hyperparameters)
+            start = time.time()
+            clf.fit(X_t, y_t)
+            end = time.time()
+            y_pred = clf.predict(X_te)
+
+            accuracy.append(accuracy_score(y_te, y_pred))
+            recall.append(recall_score(y_te, y_pred, average='weighted'))
+            precision.append(precision_score(y_te, y_pred, average='weighted'))
+            f1.append(f1_score(y_te, y_pred, average='weighted'))
+            time_list.append((end - start) * 1000)
+
+        evaluation_results = {
+            "accuracy": sum(accuracy) / len(accuracy),
+            "recall": sum(recall) / len(recall),
+            "precision": sum(precision) / len(precision),
+            "f1": sum(f1) / len(f1),
+            "time": sum(time_list) / len(time_list),
+            "scaler": names[i]
+        }
+
+
+        results[names[i]] = evaluation_results
 
     print("================================================================================")
     return results
@@ -134,6 +186,61 @@ def evaluate2(
             results[str(hyperparameter) + ":" + str(hyperparameter_value)] = __eval(clf, y_test, y_pred, start, end,
                                                                                     hyperparameter,
                                                                                     hyperparameter_value)
+
+    print("================================================================================")
+    return results
+
+
+def evaluate2_mean(
+        classifier,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        hyperparameters={},
+        hyperparameters_iterate={},
+        number_of_tests=1
+):
+    warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+    print("================================================================================")
+    print("Evaluating classifier: ", classifier.__name__)
+    print("Hyperparameters: ", hyperparameters)
+
+    results = {}
+    for hyperparameter, iteration_values in hyperparameters_iterate.items():
+        for hyperparameter_value in iteration_values:
+            hp = hyperparameters.copy()
+            hp[hyperparameter] = hyperparameter_value
+            # init
+            accuracy = []
+            recall = []
+            precision = []
+            f1 = []
+            timelist = []
+
+            for i in range(number_of_tests):
+                clf = classifier(**hp)
+                start = time.time()
+                clf.fit(X_train, y_train)
+                end = time.time()
+                y_pred = clf.predict(X_test)
+                accuracy.append(accuracy_score(y_test, y_pred))
+                recall.append(recall_score(y_test, y_pred, average='weighted'))
+                precision.append(precision_score(y_test, y_pred, average='weighted'))
+                f1.append(f1_score(y_test, y_pred, average='weighted'))
+                timelist.append((end - start) * 1000)
+
+            evaluation_results = {
+                "accuracy": sum(accuracy) / len(accuracy),
+                "recall": sum(recall) / len(recall),
+                "precision": sum(precision) / len(precision),
+                "f1": sum(f1) / len(f1),
+                "time": sum(timelist) / len(timelist),
+                hyperparameter: hyperparameter_value
+            }
+            print("done with ", hyperparameter, " ", hyperparameter_value)
+
+            results[str(hyperparameter) + ":" + str(hyperparameter_value)] = evaluation_results
 
     print("================================================================================")
     return results
