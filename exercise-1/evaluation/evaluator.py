@@ -439,43 +439,33 @@ def draw_diagram2_list_all_in_one(evaluation_results, x_axis="alpha", y_axis=["a
         plt.show()
 
 
-def draw_diagrams_per_dataset(evaluation_results):
+def draw_diagrams_per_dataset(results_per_classifier={}, metric='f1', title='F1 Score'):
     # Use a set comprehension to collect unique fields
-    fields_set = {
-        field
-        for field in __extract_fields(evaluation_results)
-        if field != 'confusion_matrix'
-    }
-    hyperparameters = []
-    for classifier in evaluation_results.values():
-        hyperparameters.append((list(classifier.keys())[0]).split(":")[0])
-    for field in fields_set:
-        if field not in hyperparameters:
-            draw_box(field, evaluation_results)
+    clf_data = {}
+    for clf_name, results in results_per_classifier.items():
+        clf_data[clf_name] = []
+        for key, sub_result in results.items():
+            for xx, value in sub_result.items():
+                if metric in value.keys():
+                    clf_data[clf_name].append(value[metric])
+    #print(clf_data)
+    draw_box(clf_data, title, metric=metric)
 
 
-def draw_box(field, evaluation_results, figsize=(10, 6)):
-    # Plotting
-    plt.figure(figsize=figsize)
-    plt.figure(figsize=figsize)
+def draw_box(data_dict, title, figsize=(5, 10), metric='f1'):
 
-    # Accumulate data for each dataset
-    dataset_data = []
-    dataset_names = []
+    fig, ax = plt.subplots(figsize=figsize)
 
-    for dataset_name, dataset in evaluation_results.items():
-        dataset_names.append(dataset_name)
-        data = [entry[field] for entry in dataset.values()]
-        dataset_data.append(data)
+    # create a boxplot for each key
+    ax.boxplot(data_dict.values())
 
-    # Create a boxplot for all datasets
-    plt.figure(figsize=figsize)
-    plt.boxplot(dataset_data, labels=dataset_names)
-    plt.title(f'Boxplot for {field} across Datasets')
-    plt.xlabel('Datasets')
-    plt.ylabel(field)
-    plt.grid(True)
-    plt.xticks(rotation=45, ha='right')
+    # set x-tick labels to the keys of the dictionary
+    ax.set_xticklabels(data_dict.keys())
+    ax.set_ylabel(metric.capitalize())
+    ax.set_title(title)
+
+    #ax.set_ylim(0.7, 1.0)
+
     plt.show()
 
 
