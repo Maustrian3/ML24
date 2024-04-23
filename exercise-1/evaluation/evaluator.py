@@ -2,7 +2,7 @@ import pandas as pd
 import time
 import warnings
 from matplotlib import pyplot as plt
-from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning, ConvergenceWarning
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
 from tabulate import tabulate
 
@@ -199,9 +199,12 @@ def evaluate2_mean(
         y_test,
         hyperparameters={},
         hyperparameters_iterate={},
-        number_of_tests=1
+        number_of_tests=1,
+        hide_warnings=False
 ):
     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+    if hide_warnings:
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
     print("================================================================================")
     print("Evaluating classifier: ", classifier.__name__)
     print("Hyperparameters: ", hyperparameters)
@@ -238,7 +241,7 @@ def evaluate2_mean(
                 "time": sum(timelist) / len(timelist),
                 hyperparameter: hyperparameter_value
             }
-            print("done with ", hyperparameter, " ", hyperparameter_value)
+            print("done with ", hyperparameter, " ", hyperparameter_value, " results: ", evaluation_results)
 
             results[str(hyperparameter) + ":" + str(hyperparameter_value)] = evaluation_results
 
