@@ -1,3 +1,5 @@
+from statistics import median
+
 import pandas as pd
 import time
 import warnings
@@ -225,8 +227,9 @@ def evaluate2_mean(
                 clf = classifier(**hp)
                 start = time.time()
                 clf.fit(X_train, y_train)
-                end = time.time()
                 y_pred = clf.predict(X_test)
+                end = time.time()
+
                 accuracy.append(accuracy_score(y_test, y_pred))
                 recall.append(recall_score(y_test, y_pred, average='weighted'))
                 precision.append(precision_score(y_test, y_pred, average='weighted'))
@@ -448,6 +451,10 @@ def draw_diagrams_per_dataset(results_per_classifier={}, metric='f1', title='F1 
             for xx, value in sub_result.items():
                 if metric in value.keys():
                     clf_data[clf_name].append(value[metric])
+        print(clf_name)
+        print(min(clf_data[clf_name]))
+        print(max(clf_data[clf_name]))
+        print(median(clf_data[clf_name]))
     #print(clf_data)
     draw_box(clf_data, title, metric=metric)
 
