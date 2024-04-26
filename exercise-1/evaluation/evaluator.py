@@ -389,10 +389,7 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
             else:
                 ax.scatter(x_labels, y_values, marker='o', label=dataset_name)
 
-        if title is not None:
-            ax.set_title(title)
-        else:
-            ax.set_title(y_axis.capitalize())
+
         if logaritmic:
             ax.set_xscale('log')
 
@@ -401,7 +398,17 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
 
         ax.set_xlabel(x_axis.capitalize())
         ax.set_ylabel(y_axis.capitalize())
-        ax.legend()
+        if subplots:
+            ax.set_title(dataset_name)
+            if title is not None:
+                fig.suptitle(title)
+
+        else:
+            if title is not None:
+                plt.title(title)
+            else:
+                plt.title(y_axis.capitalize())
+            ax.legend()
 
     plt.tight_layout()
     plt.show()
