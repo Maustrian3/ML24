@@ -345,54 +345,71 @@ def __extract_fields(data_sets):
 #     },
 # }
 
-def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False, line=True):
-    plt.figure(figsize=figsize)
+def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
 
-    is_str = False
-    for dataset_name, results in evaluation_results.items():
+    xmin = 99999
+    xmax = -99999
+    dataset_names = list(evaluation_results.keys())
+    num_datasets = len(dataset_names)
 
+    if subplots:
+        if num_datasets == 4:
+            fig, axs = plt.subplots(2, 2, figsize=figsize)
+            axs = axs.flatten()
+        else:
+            fig, axs = plt.subplots(num_datasets, 1, figsize=figsize)
+        if num_datasets == 1:
+            axs = [axs]
+    else:
+        fig, ax = plt.subplots(figsize=figsize)
+
+    for i, dataset_name in enumerate(dataset_names):
+        results = evaluation_results[dataset_name]
         x_values = [metrics[x_axis] for metrics in results.values()]
         y_values = [metrics[y_axis] for metrics in results.values()]
+
+        if subplots:
+            ax = axs[i]
+
         if isinstance(x_values[0], (int, float, complex)):
-            plt.plot(x_values, y_values, marker='o', label=dataset_name)
+            ax.plot(x_values, y_values, marker='o', label=dataset_name)
+
+            if type(x_values[0]) in [int, float, complex]:
+                xmin = min(min(x_values), xmin)
+                xmax = max(max(x_values), xmax)
         else:
-            is_str = True
-            # Extract key-value pairs and sort based on the x_metric lexicographically
             items = [(config[x_axis], config[y_axis]) for config in results.values()]
-            items.sort()  # This sorts tuples lexicographically by default
-
-            # Split sorted items back into x and y values
+            items.sort()
             x_values, y_values = zip(*items)
-
-            # Convert tuples to string labels if necessary
             x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
 
+
             if line:
-                plt.plot(x_labels, y_values, marker='o', label=dataset_name)
+                ax.plot(x_labels, y_values, marker='o', label=dataset_name)
             else:
-                plt.scatter(x_labels, y_values, marker='o', label=dataset_name)
+                ax.scatter(x_labels, y_values, marker='o', label=dataset_name)
 
+        if title is not None:
+            ax.set_title(title)
+        else:
+            ax.set_title(y_axis.capitalize())
+        if logaritmic:
+            ax.set_xscale('log')
 
-    if title is not None:
-        plt.title(title)
-    else:
-        plt.title(y_axis.capitalize())
-    # make x-axis logarithmic
-    if logaritmic:
-        plt.xscale('log')
+        if xmin != -99999 and xmax != -99999:
+            plt.xlim(xmin, xmax)
 
-    plt.xlabel(x_axis.capitalize())
-    plt.ylabel(y_axis.capitalize())
-    if is_str:
-        plt.xticks(rotation=45)
-    plt.legend()
+        ax.set_xlabel(x_axis.capitalize())
+        ax.set_ylabel(y_axis.capitalize())
+        ax.legend()
+
     plt.tight_layout()
     plt.show()
 
-def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True):
+def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
 
     for i, y in enumerate(y_axis):
-        draw_diagram2(evaluation_results, x_axis, y, figsize, title if title is not None else None, logaritmic, line)
+        draw_diagram2(evaluation_results, x_axis, y, figsize, title if title is not None else None, logaritmic, line, subplots)
 
 
 def draw_diagram2_list_all_in_one(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True):
