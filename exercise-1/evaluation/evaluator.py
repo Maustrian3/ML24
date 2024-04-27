@@ -345,6 +345,85 @@ def __extract_fields(data_sets):
 #     },
 # }
 
+def draw_diagram2_aio(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
+    if not isinstance(y_axis, list):
+        y_axis = [y_axis]
+
+    xmin = 99999
+    xmax = -99999
+    dataset_names = list(evaluation_results.keys())
+    num_datasets = len(dataset_names)
+
+    if subplots:
+        if num_datasets == 4:
+            fig, axs = plt.subplots(2, 2, figsize=figsize)
+            axs = axs.flatten()
+        else:
+            fig, axs = plt.subplots(num_datasets, 1, figsize=figsize)
+        if num_datasets == 1:
+            axs = [axs]
+    else:
+        fig, ax = plt.subplots(figsize=figsize)
+
+    for i, dataset_name in enumerate(dataset_names):
+        results = evaluation_results[dataset_name]
+        x_values = [metrics[x_axis] for metrics in results.values()]
+
+        if subplots:
+            ax = axs[i]
+
+        for metric in y_axis:
+            y_values = [metrics[metric] for metrics in results.values()]
+
+            name = f'{dataset_name} {metric}'
+            if subplots:
+                name = metric
+
+            if isinstance(x_values[0], (int, float, complex)):
+                ax.plot(x_values, y_values, marker='o', label=name)
+
+                if type(x_values[0]) in [int, float, complex]:
+                    xmin = min(min(x_values), xmin)
+                    xmax = max(max(x_values), xmax)
+            else:
+                items = [(config[x_axis], config[metric]) for config in results.values()]
+                items.sort()
+                x_values, y_values = zip(*items)
+                x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
+
+                if line:
+                    ax.plot(x_labels, y_values, marker='o', label=name)
+                else:
+                    ax.scatter(x_labels, y_values, marker='o', label=name)
+
+        if logaritmic:
+            ax.set_xscale('log')
+
+        if xmin != -99999 and xmax != -99999:
+            plt.xlim(xmin, xmax)
+
+        ax.set_xlabel(x_axis.capitalize())
+        ax.set_ylabel('Metrics')
+        if subplots:
+            ax.set_title(dataset_name)
+            if title is not None:
+                fig.suptitle(title)
+
+            if isinstance(y_axis, list):
+                if len (y_axis) > 1:
+                    ax.legend()
+
+        else:
+            if title is not None:
+                plt.title(title)
+            else:
+                plt.title(y_axis[0].capitalize())
+            ax.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
 def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
 
     xmin = 99999
@@ -533,3 +612,5 @@ def __draw_diagram_for_field(field, evaluation_results, figsize=(10, 6)):
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+
