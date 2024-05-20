@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from scipy.io import arff
 from sklearn.datasets import fetch_california_housing
@@ -33,37 +34,32 @@ class MySGDRegressor:
 
     def __update_gradients(self, X, y):
         # Calculate new slope and intercept
-
         # Loss Function: Sum of Squared Residuals
         # Calculate derivative in respect to the slope
         # derivative(sum_squared_residuals) = -2 * (observed - (intercept + slope * cur_predicted))
-        slope_gradient = 0
         intercept_gradient = 0
+        slope_gradient = 0
         for i in range(len(X)):  # For each sample do:
             # calc the value of the current sample
             # TODO change to handle more than 1 feature
-            cur_slope_gradient = -2 * (y[i] - (self.intercept + self.slope * X[i]))
-            cur_intercept_gradient = -2 * X[i] * (y[i] - (self.intercept + self.slope * X[i]))
+            intercept_gradient += -2 * (y[i] - (self.intercept + self.slope * X[i]))
+            slope_gradient += -2 * X[i] * (y[i] - (self.intercept + self.slope * X[i]))
             # sum up
-            slope_gradient = slope_gradient + cur_slope_gradient
-            intercept_gradient = intercept_gradient + cur_intercept_gradient
         # Resulting in a 'slope' for the step size calculation of the slope
         # Plug in into step size formula for the slope
-        step_size_slope = slope_gradient * self.alpha
-        step_size_intercept = intercept_gradient * self.alpha
+        step_size_intercept = (intercept_gradient / len(X)) * self.alpha
+        step_size_slope = (slope_gradient / len(X)) * self.alpha
 
         # Calc new slope/intercept values
-        self.slope = self.slope - step_size_slope
         self.intercept = self.intercept - step_size_intercept
+        self.slope = self.slope - step_size_slope
 
     def fit(self, X, y):
-        self.__update_gradients(X, y)
+        for _ in range(self.max_iter):
+            self.__update_gradients(X, y)
 
     def predict(self, X):
-        y = []
-        for i in range(len(X)):
-            y.append(self.intercept + self.slope * X[i])
-        return y
+        return self.intercept + self.slope * np.array(X)
 
 
 def main():
@@ -82,11 +78,14 @@ def main():
     # splitting dataset into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    sgd_regressor = SGDRegressor(max_iter=1000, alpha=0.0001, learning_rate='invscaling', random_state=42)
+    max_iter = 200
+    alpha = 0.001
+
+    sgd_regressor = SGDRegressor(max_iter=max_iter, alpha=alpha, learning_rate='invscaling', random_state=42)
     sgd_regressor.fit(X_train, y_train)
     y_pred = sgd_regressor.predict(X_test)
 
-    my_sgd_regressor = MySGDRegressor(max_iter=1000, alpha=0.0001)
+    my_sgd_regressor = MySGDRegressor(max_iter=max_iter, alpha=alpha)
     my_sgd_regressor.fit(X_train, y_train)
     my_y_pred = my_sgd_regressor.predict(X_test)
 
