@@ -57,7 +57,6 @@ class MyGDRegressor:
     def fit(self, X, y):
         self.__init_params(X.shape[1])
         for _ in range(self.max_iter):
-            print("Iteration %d" % _)
             self.__update_gradients(X, y)
 
     def predict(self, X):
