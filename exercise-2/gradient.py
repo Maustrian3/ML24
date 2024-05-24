@@ -17,15 +17,14 @@ from sklearn.preprocessing import StandardScaler
 # The derivatives in respect to the known features
 # Update the parameters with the new gradient
 
-# TODO stepX: Also programmatically derive loss functions? Is this needed? Or just use 2-3 different ones and calc them beforehand.
-class MySGDRegressor:
+class MyGDRegressor:
     # Loss Function: Sum of Squared Residuals
     # sum_squared_residuals = (observed - predicted)^2 = (observed - (intercept + slope * cur_predicted))^2
 
     def __init__(self, max_iter=1000, alpha=0.0001, intercept=0):
         self.max_iter = max_iter
         self.alpha = alpha
-        self.intercept = intercept
+        self.intercept = 0
         self.coefficients = None
 
     def __init_params(self, n_features):
@@ -58,6 +57,7 @@ class MySGDRegressor:
     def fit(self, X, y):
         self.__init_params(X.shape[1])
         for _ in range(self.max_iter):
+            print("Iteration %d" % _)
             self.__update_gradients(X, y)
 
     def predict(self, X):
@@ -95,7 +95,7 @@ def main():
     sgd_regressor.fit(X_train, y_train)
     sgd_y_pred = sgd_regressor.predict(X_test)
 
-    my_sgd_regressor = MySGDRegressor(max_iter=max_iter, alpha=alpha)
+    my_sgd_regressor = MyGDRegressor(max_iter=max_iter, alpha=alpha)
     my_sgd_regressor.fit(X_train, y_train)
     my_y_pred = my_sgd_regressor.predict(X_test)
 
@@ -103,9 +103,21 @@ def main():
     ls_mse = mean_squared_error(y_test, ls_y_pred)
     sgd_mse = mean_squared_error(y_test, sgd_y_pred)
     my_mse = mean_squared_error(y_test, my_y_pred)
-    print("sklearn ls regressor: ", ls_mse)
     print("sklearn sgd regressor: ", sgd_mse)
     print("my regressor: ", my_mse)
+
+
+    # use regression trees as well for comparison
+    # USE SGD regressor
+
+    # Time vergleichen -> 1
+    # Mean squared error
+    # R2 score
+
+    # Vergleiche:
+    # Unserer implementierung und hyperparameter(Learning Rate, max iterations) iterieren (Line plots)
+    # Runtime vergleichen der Regressoren (Mit default value)
+    # Metrics vergleichen der Regressoren (Mit default value)
 
 
 if __name__ == '__main__':
