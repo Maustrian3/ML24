@@ -184,8 +184,8 @@ def evaluate2(
             clf = classifier(**hp)
             start = time.time()
             clf.fit(X_train, y_train)
-            end = time.time()
             y_pred = clf.predict(X_test)
+            end = time.time()
             results[str(hyperparameter) + ":" + str(hyperparameter_value)] = __eval(clf, y_test, y_pred, start, end,
                                                                                     hyperparameter,
                                                                                     hyperparameter_value)
