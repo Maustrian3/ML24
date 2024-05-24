@@ -5,7 +5,8 @@ import time
 import warnings
 from matplotlib import pyplot as plt
 from sklearn.exceptions import UndefinedMetricWarning, ConvergenceWarning
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, confusion_matrix, r2_score, \
+    mean_squared_error
 from tabulate import tabulate
 
 
@@ -47,7 +48,7 @@ def evaluate(
 
 
 def evaluate_classifier(
-        classifiers, #=[],
+        classifiers,  # =[],
         X_train,
         y_train,
         X_test,
@@ -96,14 +97,15 @@ def evaluate_classifier(
     print("================================================================================")
     return results
 
+
 def evaluate_scaler(classifier,
-        X_train=[],
-        y_train=[],
-        X_test=[],
-        y_test=[],
-        hyperparameters={},
-        names=[],
-        number_of_tests=1
+                    X_train=[],
+                    y_train=[],
+                    X_test=[],
+                    y_test=[],
+                    hyperparameters={},
+                    names=[],
+                    number_of_tests=1
                     ):
     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
     print("================================================================================")
@@ -145,7 +147,6 @@ def evaluate_scaler(classifier,
             "scaler": names[i]
         }
 
-
         results[names[i]] = evaluation_results
 
     print("================================================================================")
@@ -163,7 +164,7 @@ def evaluate2(
 ):
     warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
     print("================================================================================")
-    print("Evaluating classifier: ", classifier.__name__)
+    print("Evaluating Model: ", classifier.__name__)
     print("Hyperparameters: ", hyperparameters)
 
     # no iteration values are selected only execute one run
@@ -171,8 +172,8 @@ def evaluate2(
         clf = classifier(**hyperparameters)
         start = time.time()
         clf.fit(X_train, y_train)
-        end = time.time()
         y_pred = clf.predict(X_test)
+        end = time.time()
         return {'default': __eval(clf, y_test, y_pred, start, end, "", "")}
 
     results = {}
@@ -281,34 +282,20 @@ def __eval_custom(clf, y_test, y_pred, start, end, name, key):
     print(tabulate(cm, headers='keys', tablefmt='psql'))
     return evaluation_results
 
-def __eval(clf, y_test, y_pred, start, end, hyperparameter_iterate, hyperparameter_value):
-    accuracy = accuracy_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred, average='weighted')
-    precision = precision_score(y_test, y_pred, average='weighted')
-    f1 = f1_score(y_test, y_pred, average='weighted')
-    cm = confusion_matrix(y_test, y_pred)
-    cm = pd.DataFrame(cm, index=clf.classes_, columns=clf.classes_)
 
+def __eval(clf, y_test, y_pred, start, end, hyperparameter_iterate, hyperparameter_value):
     evaluation_results = {
-        "accuracy": accuracy,
-        "recall": recall,
-        "precision": precision,
-        "f1": f1,
+        "R2": r2_score(y_test, y_pred),
+        "MSE": mean_squared_error(y_test, y_pred),
         "time": (end - start) * 1000,
-        "confusion_matrix": cm
     }
 
     print("========================================")
     if hyperparameter_iterate != "":
         print("Hyperparameter ", hyperparameter_iterate, " value: ", hyperparameter_value)
         evaluation_results[hyperparameter_iterate] = hyperparameter_value
-    print("Accuracy: ", accuracy)
-    print("Recall: ", recall)
-    print("Precision: ", precision)
-    print("F1: ", f1)
-    print("Time: {:.6f}ms".format((end - start) * 1000))
-    print("Confusion Matrix: ")
-    print(tabulate(cm, headers='keys', tablefmt='psql'))
+    print("R2: ", evaluation_results["R2"])
+    print("MSE: ", evaluation_results["MSE"])
     return evaluation_results
 
 
@@ -317,7 +304,6 @@ def __extract_fields(data_sets):
     for dataset in data_sets.values():
         for entry in dataset.values():
             yield from entry.keys()
-
 
 
 # data_sets = {
@@ -345,7 +331,8 @@ def __extract_fields(data_sets):
 #     },
 # }
 
-def draw_diagram2_aio(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
+def draw_diagram2_aio(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None,
+                      logaritmic=False, line=True, subplots=False):
     if not isinstance(y_axis, list):
         y_axis = [y_axis]
 
@@ -410,7 +397,7 @@ def draw_diagram2_aio(evaluation_results, x_axis="alpha", y_axis="accuracy", fig
                 fig.suptitle(title)
 
             if isinstance(y_axis, list):
-                if len (y_axis) > 1:
+                if len(y_axis) > 1:
                     ax.legend()
 
         else:
@@ -424,8 +411,8 @@ def draw_diagram2_aio(evaluation_results, x_axis="alpha", y_axis="accuracy", fig
     plt.show()
 
 
-def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
-
+def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False,
+                  line=True, subplots=False):
     xmin = 99999
     xmax = -99999
     dataset_names = list(evaluation_results.keys())
@@ -462,12 +449,10 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
             x_values, y_values = zip(*items)
             x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
 
-
             if line:
                 ax.plot(x_labels, y_values, marker='o', label=dataset_name)
             else:
                 ax.scatter(x_labels, y_values, marker='o', label=dataset_name)
-
 
         if logaritmic:
             ax.set_xscale('log')
@@ -492,57 +477,58 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
     plt.tight_layout()
     plt.show()
 
-def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True, subplots=False):
 
+def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6),
+                       title=None, logaritmic=False, line=True, subplots=False):
     for i, y in enumerate(y_axis):
-        draw_diagram2(evaluation_results, x_axis, y, figsize, title if title is not None else None, logaritmic, line, subplots)
+        draw_diagram2(evaluation_results, x_axis, y, figsize, title if title is not None else None, logaritmic, line,
+                      subplots)
 
 
-def draw_diagram2_list_all_in_one(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6), title=None, logaritmic=False, line=True):
+def draw_diagram2_list_all_in_one(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6),
+                                  title=None, logaritmic=False, line=True):
+    plt.figure(figsize=figsize)
 
-        plt.figure(figsize=figsize)
+    is_str = False
+    for dataset_name, results in evaluation_results.items():
 
-        is_str = False
-        for dataset_name, results in evaluation_results.items():
+        for i, y in enumerate(y_axis):
+            x_values = [metrics[x_axis] for metrics in results.values()]
+            y_values = [metrics[y] for metrics in results.values()]
+            if isinstance(x_values[0], (int, float, complex)):
+                plt.plot(x_values, y_values, marker='o', label=dataset_name + " " + y)
+            else:
+                is_str = True
+                # Extract key-value pairs and sort based on the x_metric lexicographically
+                items = [(config[x_axis], config[y]) for config in results.values()]
+                items.sort()  # This sorts tuples lexicographically by default
 
-            for i, y in enumerate(y_axis):
-                x_values = [metrics[x_axis] for metrics in results.values()]
-                y_values = [metrics[y] for metrics in results.values()]
-                if isinstance(x_values[0], (int, float, complex)):
-                    plt.plot(x_values, y_values, marker='o', label=dataset_name + " " + y)
+                # Split sorted items back into x and y values
+                x_values, y_values = zip(*items)
+
+                # Convert tuples to string labels if necessary
+                x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
+
+                if line:
+                    plt.plot(x_labels, y_values, marker='o', label=dataset_name + " " + y)
                 else:
-                    is_str = True
-                    # Extract key-value pairs and sort based on the x_metric lexicographically
-                    items = [(config[x_axis], config[y]) for config in results.values()]
-                    items.sort()  # This sorts tuples lexicographically by default
+                    plt.scatter(x_labels, y_values, marker='o', label=dataset_name + " " + y)
 
-                    # Split sorted items back into x and y values
-                    x_values, y_values = zip(*items)
+    if title is not None:
+        plt.title(title)
+    else:
+        plt.title(y_axis[0].capitalize())
+    # make x-axis logarithmic
+    if logaritmic:
+        plt.xscale('log')
 
-                    # Convert tuples to string labels if necessary
-                    x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
-
-                    if line:
-                        plt.plot(x_labels, y_values, marker='o', label=dataset_name + " " + y)
-                    else:
-                        plt.scatter(x_labels, y_values, marker='o', label=dataset_name + " " + y)
-
-
-        if title is not None:
-            plt.title(title)
-        else:
-            plt.title(y_axis[0].capitalize())
-        # make x-axis logarithmic
-        if logaritmic:
-            plt.xscale('log')
-
-        plt.xlabel(x_axis.capitalize())
-        plt.ylabel(y_axis[0].capitalize())
-        if is_str:
-            plt.xticks(rotation=45)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+    plt.xlabel(x_axis.capitalize())
+    plt.ylabel(y_axis[0].capitalize())
+    if is_str:
+        plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 
 def draw_diagrams_per_dataset(results_per_classifier={}, metric='f1', title='F1 Score'):
@@ -558,12 +544,11 @@ def draw_diagrams_per_dataset(results_per_classifier={}, metric='f1', title='F1 
         print(min(clf_data[clf_name]))
         print(max(clf_data[clf_name]))
         print(median(clf_data[clf_name]))
-    #print(clf_data)
+    # print(clf_data)
     draw_box(clf_data, title, metric=metric)
 
 
 def draw_box(data_dict, title, figsize=(5, 10), metric='f1'):
-
     fig, ax = plt.subplots(figsize=figsize)
 
     # create a boxplot for each key
@@ -574,7 +559,7 @@ def draw_box(data_dict, title, figsize=(5, 10), metric='f1'):
     ax.set_ylabel(metric.capitalize())
     ax.set_title(title)
 
-    #ax.set_ylim(0.7, 1.0)
+    # ax.set_ylim(0.7, 1.0)
 
     plt.show()
 
@@ -612,5 +597,3 @@ def __draw_diagram_for_field(field, evaluation_results, figsize=(10, 6)):
     plt.legend()
     plt.tight_layout()
     plt.show()
-
-
