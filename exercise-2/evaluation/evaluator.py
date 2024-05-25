@@ -429,8 +429,17 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
     else:
         fig, ax = plt.subplots(figsize=figsize)
 
+    # If x_axis has multiple values
+    x_axis_list = []
+    if isinstance(x_axis, list):
+        x_axis_list = x_axis
+
     for i, dataset_name in enumerate(dataset_names):
         results = evaluation_results[dataset_name]
+
+        if x_axis_list:
+            x_axis = x_axis_list[i]
+
         x_values = [metrics[x_axis] for metrics in results.values()]
         y_values = [metrics[y_axis] for metrics in results.values()]
 
@@ -477,63 +486,12 @@ def draw_diagram2(evaluation_results, x_axis="alpha", y_axis="accuracy", figsize
     plt.tight_layout()
     plt.show()
 
-def draw_diagram2_with_multiple_lines(evaluation_results_list, x_axis="alpha", y_axis="accuracy", figsize=(10, 6), title=None, logaritmic=False,
-                  line=True, subplots=False):
-    xmin = 99999
-    xmax = -99999
-
-    fig, ax = plt.subplots(figsize=figsize)
-
-    for j, evaluation_results in enumerate(evaluation_results_list):
-        dataset_names = list(evaluation_results.keys())
-
-        for i, dataset_name in enumerate(dataset_names):
-            results = evaluation_results[dataset_name]
-            x_values = [metrics[x_axis] for metrics in results.values()]
-            y_values = [metrics[y_axis] for metrics in results.values()]
-
-            if isinstance(x_values[0], (int, float, complex)):
-                ax.plot(x_values, y_values, marker='o', label=f"{dataset_name} (set {j + 1})")
-
-                if type(x_values[0]) in [int, float, complex]:
-                    xmin = min(min(x_values), xmin)
-                    xmax = max(max(x_values), xmax)
-            else:
-                items = [(config[x_axis], config[y_axis]) for config in results.values()]
-                items.sort()
-                x_values, y_values = zip(*items)
-                x_labels = [str(x) if isinstance(x, tuple) else x for x in x_values]
-
-                if line:
-                    ax.plot(x_labels, y_values, marker='o', label=f"{dataset_name} (set {j + 1})")
-                else:
-                    ax.scatter(x_labels, y_values, marker='o', label=f"{dataset_name} (set {j + 1})")
-
-            if logaritmic:
-                ax.set_xscale('log')
-
-            if xmin != -99999 and xmax != -99999:
-                plt.xlim(xmin, xmax)
-
-            ax.set_xlabel(x_axis.capitalize())
-            ax.set_ylabel(y_axis.capitalize())
-
-            if title is not None:
-                plt.title(title)
-            else:
-                plt.title(y_axis.capitalize())
-            ax.legend()
-
-    plt.tight_layout()
-    plt.show()
-
 
 def draw_diagram2_list(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6),
                        title=None, logaritmic=False, line=True, subplots=False):
     for i, y in enumerate(y_axis):
         draw_diagram2(evaluation_results, x_axis, y, figsize, title if title is not None else None, logaritmic, line,
                       subplots)
-
 
 def draw_diagram2_list_all_in_one(evaluation_results, x_axis="alpha", y_axis=["accuracy", "precision"], figsize=(10, 6),
                                   title=None, logaritmic=False, line=True):

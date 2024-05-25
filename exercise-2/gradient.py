@@ -21,9 +21,9 @@ class MyGDRegressor:
     # Loss Function: Sum of Squared Residuals
     # sum_squared_residuals = (observed - predicted)^2 = (observed - (intercept + slope * cur_predicted))^2
 
-    def __init__(self, max_iter=1000, alpha=0.0001, intercept=0):
+    def __init__(self, max_iter=1000, learning_rate=0.0001):
         self.max_iter = max_iter
-        self.alpha = alpha
+        self.learning_rate = learning_rate
         self.intercept = 0
         self.coefficients = None
 
@@ -41,16 +41,21 @@ class MyGDRegressor:
         intercept_gradient = 0
         coefficients_gradient = 0
 
+        # Predict target value from current intercept and coefficients
         predictions = self.intercept + X.dot(self.coefficients)
+        # Calculate error of predicted value from actual value
         errors = y - predictions
 
+        # Calculate intercept gradient with derivation of loss function in respect to the intercept and calculate mean
         intercept_gradient += -2 * np.sum(errors) / n_samples
+        # Calculate coefficients gradient with derivation of loss function in respect to the coefficients and calculate mean
         coefficients_gradient += -2 * X.T.dot(errors) / n_samples
 
-        step_size_intercept = intercept_gradient * self.alpha
-        step_size_slope = coefficients_gradient * self.alpha
+        # Calculate step size by taking the gradient and applying the learning rate
+        step_size_intercept = intercept_gradient * self.learning_rate
+        step_size_slope = coefficients_gradient * self.learning_rate
 
-        # Calc new slope/intercept values
+        # Calculate the new slope/intercept values with the step size
         self.intercept = self.intercept - step_size_intercept
         self.coefficients = self.coefficients - step_size_slope
 
@@ -64,9 +69,6 @@ class MyGDRegressor:
 
 
 def main():
-    # data = arff.loadarff('./datasets/black_friday.arff')
-    # df = pd.DataFrame(data[0])
-
     california = fetch_california_housing()
     X = california.data
     y = california.target
@@ -78,14 +80,14 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(X_normalized, y, test_size=0.2, random_state=42)
 
     max_iter = 1000
-    alpha = 0.0001
+    learning_rate = 0.0001
 
     # Least squares regression model
     ls_model = LinearRegression()
     ls_model.fit(X_train, y_train)
     ls_y_pred = ls_model.predict(X_test)
 
-    sgd_regressor = SGDRegressor(max_iter=max_iter, alpha=alpha, eta0=alpha,
+    sgd_regressor = SGDRegressor(max_iter=max_iter, eta0=learning_rate,
                                  loss='squared_error',
                                  learning_rate='constant', tol=None,
                                  shuffle=False,
@@ -94,7 +96,7 @@ def main():
     sgd_regressor.fit(X_train, y_train)
     sgd_y_pred = sgd_regressor.predict(X_test)
 
-    my_sgd_regressor = MyGDRegressor(max_iter=max_iter, alpha=alpha)
+    my_sgd_regressor = MyGDRegressor(max_iter=max_iter, learning_rate=learning_rate)
     my_sgd_regressor.fit(X_train, y_train)
     my_y_pred = my_sgd_regressor.predict(X_test)
 
@@ -104,20 +106,6 @@ def main():
     my_mse = mean_squared_error(y_test, my_y_pred)
     print("sklearn sgd regressor: ", sgd_mse)
     print("my regressor: ", my_mse)
-
-
-    # use regression trees as well for comparison
-    # USE SGD regressor
-
-    # Time vergleichen -> 1
-    # Mean squared error
-    # R2 score
-
-    # Vergleiche:
-    # Unserer implementierung und hyperparameter(Learning Rate, max iterations) iterieren (Line plots)
-    # Runtime vergleichen der Regressoren (Mit default value)
-    # Metrics vergleichen der Regressoren (Mit default value)
-
 
 if __name__ == '__main__':
     main()
