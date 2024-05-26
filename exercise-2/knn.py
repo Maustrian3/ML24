@@ -76,26 +76,30 @@ class CustomKNeighborsRegressor:
 
     class _Point:
         def __init__(self, coords, target):
-            self.coords = coords
-            self.target = target
+            self.coords = coords    # features
+            self.target = target    # target value
 
 
     class _TreeNode:
         def __init__(self, point, left=None, right=None, axis=0):
             self.value = point
-            self.left = left
-            self.right = right
-            self.axis = axis
+            self.left = left    # left subtree
+            self.right = right  # right subtree
+            self.axis = axis    # axis to split on
 
 
     def _build_kd_tree(self, points, leaf_size, depth=0):
+        # stop recursion if no points are left
         if len(points) == 0:
             return None
 
+        # get number of dimensions/features
         dimension = len(points[0].coords)
+        # decide which axis to split on
         # change axis in each level of the tree
         axis = depth % dimension
 
+        # if leaf_size is reached, put all the points in the leaf
         if leaf_size != 1 and len(points) <= leaf_size:
             return self._TreeNode(point=points,
                              left=None,
@@ -106,6 +110,7 @@ class CustomKNeighborsRegressor:
         points.sort(key=lambda point: point.coords[axis])
         median = len(points) // 2
 
+        # recursively build the left and right subtree
         return self._TreeNode(
             point=points[median],
             left=self._build_kd_tree(points[:median], depth + 1),
@@ -117,7 +122,9 @@ class CustomKNeighborsRegressor:
         if self.kd_tree is None:
             return None
 
+        # Queue to keep the n_neighbors best points
         best = _BestQueue(self.n_neighbors)
+        # start search from the root
         self.search(self.kd_tree, target, best)
 
         return [point[0].target for point in best.get()]
@@ -126,21 +133,27 @@ class CustomKNeighborsRegressor:
         if node is None:
             return
 
+        # if leaf, do brute seach
         if isinstance(node.value, list):
-            # do brute search in leaf
             for point in node.value:
+                # calculate distance
                 dist = self.metric(target, point.coords)
+                # keep point if it is one of the n best
                 best.add(point, dist)
             return
 
         # from here on: not a leaf
         point = node.value
+        # keep current point if it is one of the n best
         dist = self.metric(target, point.coords)
         best.add(point, dist)
 
         next_branch = None
         opposite_branch = None
 
+        # choose the next branch to search
+        # if target value is smaller than the current point's value on the axis, go left
+        # otherwise go right next
         if target[node.axis] < point.coords[node.axis]:
             next_branch = node.left
             opposite_branch = node.right
@@ -152,6 +165,7 @@ class CustomKNeighborsRegressor:
 
         # if not enough points found already
         # or the distance to the opposite branch is smaller than the farthest point found so far
+        # => then there is the possibility of finding a closer point in the opposite branch
         farthest_so_far = best.get()[-1][1]
         if best.get_length() < self.n_neighbors or abs(point.coords[node.axis] - target[node.axis]) < farthest_so_far:
             self.search(opposite_branch, target, best)
